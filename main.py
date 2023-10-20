@@ -20,8 +20,8 @@ def go(config: DictConfig):
         # This was passed on the command line as a comma-separated list of steps
         steps_to_execute = config["main"]["execute_steps"].split(",")
     else:
-        assert isinstance(config["main"]["execute_steps"], list)
-        steps_to_execute = config["main"]["execute_steps"]
+
+        steps_to_execute = list(config["main"]["execute_steps"])
 
     # Download step
     if "download" in steps_to_execute:
@@ -46,7 +46,7 @@ def go(config: DictConfig):
                 "artifact_name": "preprocessed_data.csv",
                 "artifact_type": "preprocessed_data",
                 "artifact_description": "Data with preprocessing applied"
-            }
+            },
         )
 
     if "check_data" in steps_to_execute:
@@ -57,10 +57,11 @@ def go(config: DictConfig):
                 "reference_artifact": config["data"]["reference_dataset"],
                 "sample_artifact": "preprocessed_data.csv:latest",
                 "ks_alpha": config["data"]["ks_alpha"]
-            }
+            },
         )
 
     if "segregate" in steps_to_execute:
+
         _ = mlflow.run(
             os.path.join(root_path, "segregate"),
             "main",
@@ -70,12 +71,11 @@ def go(config: DictConfig):
                 "artifact_type": "segregated_data",
                 "test_size": config["data"]["test_size"],
                 "stratify": config["data"]["stratify"]
-            }
+            },
         )
 
     if "random_forest" in steps_to_execute:
-
-# Serialize decision tree configuration
+        # Serialize decision tree configuration
         model_config = os.path.abspath("random_forest_config.yml")
 
         with open(model_config, "w+") as fp:
@@ -91,17 +91,18 @@ def go(config: DictConfig):
                 "random_seed": config["main"]["random_seed"],
                 "val_size": config["data"]["test_size"],
                 "stratify": config["data"]["stratify"]
-            }
+            },
         )
 
     if "evaluate" in steps_to_execute:
+
         _ = mlflow.run(
             os.path.join(root_path, "evaluate"),
             "main",
             parameters={
                 "model_export": f"{config['random_forest_pipeline']['export_artifact']}:latest",
                 "test_data": "data_test.csv:latest"
-            }
+            },
         )
 
 
